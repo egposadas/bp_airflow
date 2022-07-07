@@ -1,0 +1,41 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: apache-airflow-worker
+  name: apache-airflow-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: apache-airflow-worker
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: apache-airflow-worker
+    spec:
+      containers:
+      - image: apache-airflow-standalone
+        imagePullPolicy: Never
+        name: worker
+        command: ["airflow", "celery", "worker"]
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+        envFrom:
+        - secretRef:
+            name: apache-airflow-env
+        volumeMounts:
+        - mountPath: /app/logs
+          name: logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+status: {}

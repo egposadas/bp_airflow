@@ -1,0 +1,38 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: APP-mysql
+  name: APP-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: APP-mysql
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: APP-mysql
+    spec:
+      containers:
+      - image: artifactory.teslamotors.com:2153/atm-baseimages/mysql8:v6
+        imagePullPolicy: IfNotPresent
+        name: mysql
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 400m
+            memory: 1024Mi
+        env:
+        - name: MYSQL_USER
+          value: "airflow"
+        - name: MYSQL_PASSWORD
+          value: "airflow"
+        - name: MYSQL_DATABASE
+          value: "airflow"
+status: {}

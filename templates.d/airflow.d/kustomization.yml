@@ -1,0 +1,139 @@
+commonAnnotations:
+  app: 
+  celery-backend: 
+  celery-broker: 
+  cluster: 
+  database-sqlalchemy-connection: 
+  registry: 
+
+resources:
+- deployment.yml
+- flower-service.yml
+- flower-ingress.yml
+- webserver-service.yml
+- webserver-ingress.yml
+
+replacements:
+# Name.
+## Deployment.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.app
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - metadata.name
+      - metadata.labels.app
+      - spec.selector.matchLabels.app
+      - spec.template.metadata.labels.app
+      - spec.template.spec.containers.0.envFrom.0.secretRef.name
+      - spec.template.spec.containers.1.envFrom.0.secretRef.name
+      - spec.template.spec.containers.2.envFrom.0.secretRef.name
+      - spec.template.spec.containers.3.envFrom.0.secretRef.name
+      - spec.template.spec.imagePullSecrets.0.name
+    options:
+      delimiter: "-"
+      index: 0
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.image
+      - spec.template.spec.containers.1.image
+      - spec.template.spec.containers.2.image
+      - spec.template.spec.containers.3.image
+    options:
+      delimiter: "/"
+      index: 1
+## Service.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.app
+  targets:
+  - select:
+      kind: Service
+    fieldPaths:
+      - metadata.name
+      - metadata.labels.app
+      - spec.selector.app
+    options:
+      delimiter: "-"
+      index: 0
+## Ingress.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.app
+  targets:
+  - select:
+      kind: Ingress
+    fieldPaths:
+      - metadata.name
+      - spec.rules.0.host
+      - spec.rules.0.http.paths.0.backend.service.name
+    options:
+      delimiter: "-"
+      index: 0
+# Registry.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.registry
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.image
+      - spec.template.spec.containers.1.image
+      - spec.template.spec.containers.2.image
+      - spec.template.spec.containers.3.image
+    options:
+      delimiter: "/"
+      index: 0
+# Cluster.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.cluster
+  targets:
+  - select:
+      kind: Ingress
+    fieldPaths:
+      - spec.rules.0.host
+    options:
+      delimiter: "."
+      index: 1
+# Database.
+## Celery backend.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.celery-backend
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.env.[name=AIRFLOW__CELERY__RESULT_BACKEND].value
+      - spec.template.spec.containers.1.env.[name=AIRFLOW__CELERY__RESULT_BACKEND].value
+      - spec.template.spec.containers.2.env.[name=AIRFLOW__CELERY__RESULT_BACKEND].value
+      - spec.template.spec.containers.3.env.[name=AIRFLOW__CELERY__RESULT_BACKEND].value
+## Celery broker.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.celery-broker
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.env.[name=AIRFLOW__CELERY__BROKER_URL].value
+      - spec.template.spec.containers.1.env.[name=AIRFLOW__CELERY__BROKER_URL].value
+      - spec.template.spec.containers.2.env.[name=AIRFLOW__CELERY__BROKER_URL].value
+      - spec.template.spec.containers.3.env.[name=AIRFLOW__CELERY__BROKER_URL].value
+## Database SQLAlchemy connection.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.database-sqlalchemy-connection
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.env.[name=AIRFLOW__DATABASE__SQL_ALCHEMY_CONN].value
+      - spec.template.spec.containers.1.env.[name=AIRFLOW__DATABASE__SQL_ALCHEMY_CONN].value
+      - spec.template.spec.containers.2.env.[name=AIRFLOW__DATABASE__SQL_ALCHEMY_CONN].value
+      - spec.template.spec.containers.3.env.[name=AIRFLOW__DATABASE__SQL_ALCHEMY_CONN].value

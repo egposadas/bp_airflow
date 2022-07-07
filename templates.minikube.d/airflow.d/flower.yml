@@ -1,0 +1,17 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: apache-airflow-containerized
+  name: apache-airflow-flower
+spec:
+  ports:
+  - port: 5555
+    protocol: TCP
+    targetPort: 5555
+  selector:
+    app: apache-airflow-containerized
+  type: NodePort
+status:
+  loadBalancer: {}

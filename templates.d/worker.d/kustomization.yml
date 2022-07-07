@@ -1,0 +1,76 @@
+commonAnnotations:
+  app: 
+  celery-backend: 
+  celery-broker: 
+  database-sqlalchemy-connection: 
+  registry: 
+
+resources:
+- deployment.yml
+
+replacements:
+# Name.
+## Deployment.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.app
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - metadata.name
+      - metadata.labels.app
+      - spec.selector.matchLabels.app
+      - spec.template.metadata.labels.app
+      - spec.template.spec.containers.0.envFrom.0.secretRef.name
+      - spec.template.spec.imagePullSecrets.0.name
+    options:
+      delimiter: "-"
+      index: 0
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.image
+    options:
+      delimiter: "/"
+      index: 1
+# Registry.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.registry
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.image
+    options:
+      delimiter: "/"
+      index: 0
+# Database.
+## Celery backend.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.celery-backend
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.env.[name=AIRFLOW__CELERY__RESULT_BACKEND].value
+## Celery broker.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.celery-broker
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.env.[name=AIRFLOW__CELERY__BROKER_URL].value
+## Database SQLAlchemy connection.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.database-sqlalchemy-connection
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - spec.template.spec.containers.0.env.[name=AIRFLOW__DATABASE__SQL_ALCHEMY_CONN].value

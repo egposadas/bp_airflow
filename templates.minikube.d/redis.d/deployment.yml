@@ -1,0 +1,34 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: apache-airflow-redis
+  name: apache-airflow-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apache-airflow-redis
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: apache-airflow-redis
+    spec:
+      containers:
+      - image: artifactory.teslamotors.com:2153/atm-baseimages/redis
+        imagePullPolicy: IfNotPresent
+        name: redis
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
+status: {}

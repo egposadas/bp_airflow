@@ -1,0 +1,48 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: APP-initdb
+  name: APP-initdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: APP-initdb
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: APP-initdb
+    spec:
+      containers:
+      - image: REGISTRY/APP
+        imagePullPolicy: Always
+        name: initdb
+        command: ["sleep", "infinity"]
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 400m
+            memory: 1024Mi
+        env:
+        - name: AIRFLOW__CELERY__BROKER_URL
+          value: AIRFLOW__CELERY__BROKER_URL
+        - name: AIRFLOW__CELERY__RESULT_BACKEND
+          value: AIRFLOW__CELERY__RESULT_BACKEND
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "CeleryExecutor"
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: "airflow.utils.net.get_host_ip_address"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        envFrom:
+        - secretRef:
+            name: APP-env
+      imagePullSecrets:
+      - name: APP-regcred
+status: {}

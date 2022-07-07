@@ -1,0 +1,62 @@
+name: QA
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+jobs:
+  build:
+    name: Build
+    runs-on: [ self-hosted ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Login to Artifactory
+      uses: actions/login-action@v1
+      with:
+        registry: ${{ secrets.ARTIFACTORY_HOST }}
+        username: ${{ secrets.ARTIFACTORY_USERNAME }}
+        password: ${{ secrets.ARTIFACTORY_PASSWORD }}
+    - name: Build and push to Artifactory
+      uses: actions/build-push-action@v2
+      with:
+        push: true
+        tags: ${{ secrets.ARTIFACTORY_HOST }}/${{ secrets.APP_NAME }}:latest
+    - name: Kubernetes installation
+      uses: actions/setup-kubectl@v2.0
+      with:
+        version: v1.23.6
+      id: install
+    - name: Kubernetes configuration
+      run: |
+        rm -f ${HOME}/.kube/config
+        kubectl config set-cluster ${{ secrets.KUBE_CLUSTER }} --server=https://kubernetes.platform.tesla.com/${{ secrets.KUBE_CLUSTER }}
+        kubectl config set-credentials dummy-user --token=${{ secrets.KUBE_TOKEN }}
+        kubectl config set-context ${{ secrets.KUBE_NAMESPACE }} --cluster=${{ secrets.KUBE_CLUSTER }} --user=dummy-user --namespace=${{ secrets.KUBE_NAMESPACE }}
+        kubectl config use-context ${{ secrets.KUBE_NAMESPACE }}
+    - name: Artifactory secret
+      run: |
+        kubectl --insecure-skip-tls-verify=true create --save-config --dry-run=client -o yaml secret docker-registry ${{ secrets.APP_NAME }}-regcred --docker-server="${{ secrets.ARTIFACTORY_HOST }}" --docker-username="${{ secrets.ARTIFACTORY_USERNAME }}" --docker-password="${{ secrets.ARTIFACTORY_PASSWORD }}" | kubectl apply -f -
+    - name: Kubernetes secret
+      run: |
+        echo '${{ toJSON(secrets) }}' | head -n -1 | tail -n +2 | sed "s/^[[:space:]]*//" | sed "s/,$//" | sed "s/^\"//" | sed "s/\": \"/=/" | sed "s/\"$//" | grep "^K8S_" | sed "s/^K8S_//" > .env
+        kubectl --insecure-skip-tls-verify=true create --save-config --dry-run=client -o yaml secret generic ${{ secrets.APP_NAME }}-env --from-env-file=.env | kubectl apply -f -
+    - name: Kubernetes annotations
+      run: |
+        find . -type f -name "kustomization.yml" -print0 | xargs -0 sed -i "s/app: .*$/app: ${{ secrets.APP_NAME }}/"
+        find . -type f -name "kustomization.yml" -print0 | xargs -0 sed -i "s/celery-backend: .*$/celery-backend: db+mysql+pymysql:\/\/airflow:airflow@${{ secrets.APP_NAME }}-mysql:3306\/airflow/"
+        find . -type f -name "kustomization.yml" -print0 | xargs -0 sed -i "s/celery-broker: .*$/celery-broker: redis:\/\/${{ secrets.APP_NAME }}-redis:6379\/0/"
+        find . -type f -name "kustomization.yml" -print0 | xargs -0 sed -i "s/cluster: .*$/cluster: ${{ secrets.KUBE_CLUSTER }}/"
+        find . -type f -name "kustomization.yml" -print0 | xargs -0 sed -i "s/database-sqlalchemy-connection: .*$/database-sqlalchemy-connection: mysql+pymysql:\/\/airflow:airflow@${{ secrets.APP_NAME }}-mysql:3306\/airflow/"
+        find . -type f -name "kustomization.yml" -print0 | xargs -0 sed -i "s/registry: .*$/registry: ${{ secrets.ARTIFACTORY_HOST }}/"
+    - name: Kubernetes deployment
+      run: |
+        kubectl --insecure-skip-tls-verify=true apply -k templates.d/airflow.d/
+        kubectl --insecure-skip-tls-verify=true apply -k templates.d/worker.d/
+    - name: Kubernetes roll-out
+      run: |
+        kubectl --insecure-skip-tls-verify=true rollout restart deployment ${{ secrets.APP_NAME }}-airflow
+        kubectl --insecure-skip-tls-verify=true rollout restart deployment ${{ secrets.APP_NAME }}-worker

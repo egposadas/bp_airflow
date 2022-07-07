@@ -1,0 +1,123 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: APP-airflow
+  name: APP-airflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: APP-airflow
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: APP-airflow
+    spec:
+      containers:
+      - image: REGISTRY/APP
+        imagePullPolicy: Always
+        name: scheduler
+        command: ["airflow", "scheduler"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        env:
+        - name: AIRFLOW__CELERY__BROKER_URL
+          value: AIRFLOW__CELERY__BROKER_URL
+        - name: AIRFLOW__CELERY__RESULT_BACKEND
+          value: AIRFLOW__CELERY__RESULT_BACKEND
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "CeleryExecutor"
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: "airflow.utils.net.get_host_ip_address"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        envFrom:
+        - secretRef:
+            name: APP-env
+      - image: REGISTRY/APP
+        imagePullPolicy: Always
+        name: webserver
+        command: ["airflow", "webserver"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        env:
+        - name: AIRFLOW__CELERY__BROKER_URL
+          value: AIRFLOW__CELERY__BROKER_URL
+        - name: AIRFLOW__CELERY__RESULT_BACKEND
+          value: AIRFLOW__CELERY__RESULT_BACKEND
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "CeleryExecutor"
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: "airflow.utils.net.get_host_ip_address"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        envFrom:
+        - secretRef:
+            name: APP-env
+      - image: REGISTRY/APP
+        imagePullPolicy: Always
+        name: flower
+        command: ["airflow", "celery", "flower"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        env:
+        - name: AIRFLOW__CELERY__BROKER_URL
+          value: AIRFLOW__CELERY__BROKER_URL
+        - name: AIRFLOW__CELERY__RESULT_BACKEND
+          value: AIRFLOW__CELERY__RESULT_BACKEND
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "CeleryExecutor"
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: "airflow.utils.net.get_host_ip_address"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        envFrom:
+        - secretRef:
+            name: APP-env
+      - image: REGISTRY/APP
+        imagePullPolicy: Always
+        name: triggerer
+        command: ["airflow", "triggerer"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        env:
+        - name: AIRFLOW__CELERY__BROKER_URL
+          value: AIRFLOW__CELERY__BROKER_URL
+        - name: AIRFLOW__CELERY__RESULT_BACKEND
+          value: AIRFLOW__CELERY__RESULT_BACKEND
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "CeleryExecutor"
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: "airflow.utils.net.get_host_ip_address"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        envFrom:
+        - secretRef:
+            name: APP-env
+      imagePullSecrets:
+      - name: APP-regcred
+status: {}

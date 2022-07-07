@@ -1,0 +1,17 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: apache-airflow-redis
+  name: apache-airflow-redis
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: apache-airflow-redis
+  type: NodePort
+status:
+  loadBalancer: {}

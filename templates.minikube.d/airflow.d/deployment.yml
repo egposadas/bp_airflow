@@ -1,0 +1,77 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: apache-airflow-containerized
+  name: apache-airflow-containerized
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apache-airflow-containerized
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: apache-airflow-containerized
+    spec:
+      containers:
+      - image: apache-airflow-standalone
+        imagePullPolicy: Never
+        name: scheduler
+        command: ["airflow", "scheduler"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        envFrom:
+        - secretRef:
+            name: apache-airflow-env
+      - image: apache-airflow-standalone
+        imagePullPolicy: Never
+        name: webserver
+        command: ["airflow", "webserver"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        envFrom:
+        - secretRef:
+            name: apache-airflow-env
+      - image: apache-airflow-standalone
+        imagePullPolicy: Never
+        name: flower
+        command: ["airflow", "celery", "flower"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        envFrom:
+        - secretRef:
+            name: apache-airflow-env
+      - image: apache-airflow-standalone
+        imagePullPolicy: Never
+        name: triggerer
+        command: ["airflow", "triggerer"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        envFrom:
+        - secretRef:
+            name: apache-airflow-env
+status: {}

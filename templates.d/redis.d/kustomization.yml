@@ -1,0 +1,38 @@
+commonAnnotations:
+  app: 
+
+resources:
+- deployment.yml
+- service.yml
+
+replacements:
+# Name.
+## Deployment.
+- source:
+    kind: Deployment
+    fieldPath: metadata.annotations.app
+  targets:
+  - select:
+      kind: Deployment
+    fieldPaths:
+      - metadata.name
+      - metadata.labels.app
+      - spec.selector.matchLabels.app
+      - spec.template.metadata.labels.app
+    options:
+      delimiter: "-"
+      index: 0
+## Service.
+- source:
+    kind: Service
+    fieldPath: metadata.annotations.app
+  targets:
+  - select:
+      kind: Service
+    fieldPaths:
+      - metadata.name
+      - metadata.labels.app
+      - spec.selector.app
+    options:
+      delimiter: "-"
+      index: 0

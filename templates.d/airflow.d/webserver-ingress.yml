@@ -1,0 +1,19 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  creationTimestamp: null
+  name: APP-webserver
+spec:
+  rules:
+  - host: APP-webserver.CLUSTER.k8s.tesla.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: APP-webserver
+            port:
+              number: 8080
+        path: /
+        pathType: Exact
+status:
+  loadBalancer: {}

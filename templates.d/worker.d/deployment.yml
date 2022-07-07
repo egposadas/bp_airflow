@@ -1,0 +1,54 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: APP-worker
+  name: APP-worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: APP-worker
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: APP-worker
+    spec:
+      containers:
+      - image: REGISTRY/APP
+        imagePullPolicy: Always
+        name: worker
+        command: ["airflow", "celery", "worker"]
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1024Mi
+          limits:
+            cpu: 1000m
+            memory: 2048Mi
+        env:
+        - name: AIRFLOW__CELERY__BROKER_URL
+          value: AIRFLOW__CELERY__BROKER_URL
+        - name: AIRFLOW__CELERY__RESULT_BACKEND
+          value: AIRFLOW__CELERY__RESULT_BACKEND
+        - name: AIRFLOW__CORE__EXECUTOR
+          value: "CeleryExecutor"
+        - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+          value: "airflow.utils.net.get_host_ip_address"
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+        envFrom:
+        - secretRef:
+            name: APP-env
+        volumeMounts:
+        - mountPath: /app/logs
+          name: logs
+      imagePullSecrets:
+      - name: APP-regcred
+      volumes:
+      - name: logs
+        emptyDir: {}
+status: {}

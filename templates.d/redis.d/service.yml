@@ -1,0 +1,16 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: APP-redis
+  name: APP-redis
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: APP-redis
+status:
+  loadBalancer: {}
